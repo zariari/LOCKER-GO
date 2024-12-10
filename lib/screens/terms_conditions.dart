@@ -9,7 +9,7 @@ class TermsAndConditionsPage extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white, 
+          backgroundColor: Colors.white,
           contentPadding: const EdgeInsets.all(20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -19,7 +19,8 @@ class TermsAndConditionsPage extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: const Icon(Icons.check_circle, color: Colors.green, size: 50),
+                child: const Icon(Icons.check_circle,
+                    color: Colors.green, size: 50),
               ),
               const Text(
                 'Tu registro en LockerGo ha sido exitoso!',
@@ -32,17 +33,18 @@ class TermsAndConditionsPage extends StatelessWidget {
           actions: [
             TextButton(
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 backgroundColor: const Color.fromARGB(255, 123, 123, 123),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); 
+                Navigator.of(context).pop();
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()), 
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                 );
               },
               child: const Text(
@@ -63,7 +65,7 @@ class TermsAndConditionsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Image.asset(
-          'assets/images/header.png', 
+          'assets/images/header.png',
           fit: BoxFit.cover,
         ),
         backgroundColor: Colors.transparent,
@@ -99,7 +101,7 @@ class TermsAndConditionsPage extends StatelessWidget {
 Al acceder y utilizar la aplicación LockerGO, usted acepta cumplir con estos Términos y Condiciones. Si no está de acuerdo con estos términos, no podrá utilizar la aplicación.
 
 2. Registro de Usuario: 
-Para utilizar LockerGO, debe registrarse proporcionando su cédula de identidad, correo electrónico institucional y otra información personal requerida. Usted se compromete a proporcionar información veraz y actualizada durante el registro.
+Para utilizar LockerGO, debe registrarse proporcionando su cédula de identidad y otra información personal requerida. Usted se compromete a proporcionar información veraz y actualizada durante el registro.
 
 3. Uso de la Aplicación: 
 LockerGO le permite reservar lockers de acuerdo con la disponibilidad y las políticas establecidas. Cada usuario puede tener una sola reserva activa por semestre académico. Está prohibido el uso indebido de la aplicación, incluyendo cualquier acto que interfiera con su funcionamiento o con los derechos de otros usuarios.
@@ -137,11 +139,13 @@ Para cualquier pregunta o soporte relacionado con la aplicación, el usuario pue
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  _showSuccessModal(context); 
+                  _showSuccessModal(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF005DA7),
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1, vertical: 10), // Dynamic horizontal padding
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.1,
+                      vertical: 10), // Dynamic horizontal padding
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

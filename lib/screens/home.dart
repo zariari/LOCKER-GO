@@ -1,20 +1,64 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lockergo/custom_bottom_navigation_bar.dart';
 import 'package:lockergo/screens/lockers/faculty.dart';
 import 'package:lockergo/screens/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:lockergo/globals/globals.dart' as globals;
 
-
-class LockerReservationPage extends StatelessWidget {
+class LockerReservationPage extends StatefulWidget {
   const LockerReservationPage({super.key});
+
+  @override
+  _LockerReservationPageState createState() => _LockerReservationPageState();
+}
+
+class _LockerReservationPageState extends State<LockerReservationPage> {
+  String? firstName;
+  String? lastName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDetails();
+  }
+
+  Future<void> _loadUserDetails() async {
+    const String apiUrl = 'http://pagueya-001-site3.mtempurl.com/api/Usuario';
+
+    try {
+      final response =
+          await http.get(Uri.parse('$apiUrl/${globals.currentUserCedula}'));
+
+      if (response.statusCode == 200) {
+        final userData = jsonDecode(response.body);
+        setState(() {
+          firstName = userData['first_name'];
+          lastName = userData['last_name'];
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Error al cargar datos del usuario: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     // Get the screen width and height
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the theme provider
+
+    final themeProvider =
+        Provider.of<ThemeProvider>(context); // Access the theme provider
 
     return Scaffold(
       appBar: AppBar(
@@ -36,18 +80,20 @@ class LockerReservationPage extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
             Center(
               child: Text(
-                'Bienvenido Nombre',
+                'Bienvenido ${firstName ?? ''}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Night mode color
+                  color: themeProvider.isDarkMode
+                      ? Colors.white
+                      : Colors.black, // Night mode color
                 ),
               ),
             ),
@@ -57,7 +103,9 @@ class LockerReservationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Colors.black, // Blue for night mode
+                color: themeProvider.isDarkMode
+                    ? const Color(0xFF9de9ff)
+                    : Colors.black, // Blue for night mode
               ),
               textAlign: TextAlign.center,
             ),
@@ -73,7 +121,9 @@ class LockerReservationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: themeProvider.isDarkMode ? Color(0xFF9de9ff) :  Colors.black, // Blue for night mode
+                color: themeProvider.isDarkMode
+                    ? const Color(0xFF9de9ff)
+                    : Colors.black, // Blue for night mode
               ),
             ),
             Text(
@@ -81,14 +131,18 @@ class LockerReservationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 68,
                 fontWeight: FontWeight.bold,
-                color: themeProvider.isDarkMode ? Color(0xFF9de9ff) :  Colors.black, // Blue for night mode
+                color: themeProvider.isDarkMode
+                    ? const Color(0xFF9de9ff)
+                    : Colors.black, // Blue for night mode
               ),
             ),
             Text(
-              'Periodo Academica 2024-2025',
+              'Periodo Academico 2024-2025',
               style: TextStyle(
                 fontSize: 16,
-                color: themeProvider.isDarkMode ? Color(0xFF9de9ff) :  Colors.black, // Blue for night mode
+                color: themeProvider.isDarkMode
+                    ? const Color(0xFF9de9ff)
+                    : Colors.black, // Blue for night mode
               ),
             ),
             const SizedBox(height: 20),
@@ -96,19 +150,25 @@ class LockerReservationPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const FacultyScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const FacultyScreen()),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFf39200),
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1, vertical: 10), // Dynamic padding based on screen width
+                padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.1,
+                    vertical: 10), // Dynamic padding based on screen width
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
               child: const Text(
                 'Reserva tu Locker Ya!',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white),
               ),
             ),
             const SizedBox(height: 30),
@@ -117,7 +177,9 @@ class LockerReservationPage extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // White for night mode
+                color: themeProvider.isDarkMode
+                    ? Colors.white
+                    : Colors.black, // White for night mode
               ),
               textAlign: TextAlign.center,
             ),
@@ -129,14 +191,18 @@ class LockerReservationPage extends StatelessWidget {
                     text: 'Contáctanos en ',
                     style: TextStyle(
                       fontSize: 16,
-                      color: themeProvider.isDarkMode ? Colors.white : Colors.black, // White for night mode
+                      color: themeProvider.isDarkMode
+                          ? Colors.white
+                          : Colors.black, // White for night mode
                     ),
                   ),
                   TextSpan(
                     text: 'soporte@lockergo.com',
                     style: TextStyle(
                       fontSize: 16,
-                      color: themeProvider.isDarkMode ? Color(0xFFf39200) : Color(0xFF0a4c86), // Orange for night mode
+                      color: themeProvider.isDarkMode
+                          ? const Color(0xFFf39200)
+                          : const Color(0xFF0a4c86), // Orange for night mode
                     ),
                   ),
                 ],

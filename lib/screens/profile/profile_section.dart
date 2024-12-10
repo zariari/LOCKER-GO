@@ -1,32 +1,145 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:lockergo/screens/log/login.dart';
 import 'package:lockergo/screens/profile/user_edit.dart';
 import 'package:lockergo/screens/theme_provider.dart';
+import 'package:lockergo/globals/globals.dart' as globals;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:vibration/vibration.dart';
 
-class ProfileSection extends StatelessWidget {
+class ProfileSection extends StatefulWidget {
   const ProfileSection({super.key});
 
-  void _logout(BuildContext context) {
+  @override
+  _ProfileSectionState createState() => _ProfileSectionState();
+}
+
+class _ProfileSectionState extends State<ProfileSection> {
+  String? firstName;
+  String? lastName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    const String apiUrl = 'http://pagueya-001-site3.mtempurl.com/api/Usuario';
+
+    try {
+      final response =
+          await http.get(Uri.parse('$apiUrl/${globals.currentUserCedula}'));
+
+      if (response.statusCode == 200) {
+        final userData = jsonDecode(response.body);
+        setState(() {
+          firstName = userData['first_name'];
+          lastName = userData['last_name'];
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Error al cargar el perfil: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    const String apiUrl = 'http://pagueya-001-site3.mtempurl.com/api/Usuario';
+
+    try {
+      final response =
+          await http.delete(Uri.parse('$apiUrl/${globals.currentUserCedula}'));
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cuenta eliminada correctamente.')),
+        );
+        // Vibrate for success
+        if (await Vibration.hasVibrator() ?? false) {
+          Vibration.vibrate(
+              pattern: [0, 100, 50, 100, 50, 100]); // Success pattern
+        }
+
+        globals.currentUserCedula = null;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('cedula');
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Error: ${errorData['message'] ?? 'No se pudo eliminar la cuenta.'}')),
+        );
+        // Vibrate for error
+        if (await Vibration.hasVibrator() ?? false) {
+          Vibration.vibrate(pattern: [0, 200, 100, 200]); // Error pattern
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión: $e')),
+      );
+      // Vibrate for error
+      if (await Vibration.hasVibrator() ?? false) {
+        Vibration.vibrate(pattern: [0, 200, 100, 200]); // Error pattern
+      }
+    }
+  }
+
+  void _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('cedula');
+    globals.currentUserCedula = null;
+    // Vibrate for success
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(pattern: [0, 100, 50, 100, 50, 100]); // Success pattern
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
 
-  void _navigateToEditProfilePage(BuildContext context) {
-    Navigator.push(
+  void _navigateToEditProfilePage(BuildContext context) async {
+    // Navega a la página de edición del perfil y espera el resultado
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const EditProfilePage()),
     );
+
+    // Recarga los datos del perfil al regresar
+    _loadUserProfile();
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
+  void _showDeleteConfirmation(BuildContext context) async {
+    // Vibrate to draw attention to the dialog
+    if (await Vibration.hasVibrator() == true) {
+      Vibration.vibrate(
+        pattern: [0, 200, 100, 200, 100, 200], // Warning pattern
+      );
+    }
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white, 
+          backgroundColor: Colors.white,
           contentPadding: const EdgeInsets.all(20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -36,7 +149,7 @@ class ProfileSection extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: const Icon(Icons.sentiment_dissatisfied, color: Colors.orange, size: 50),
+                child: const Icon(Icons.warning, color: Colors.red, size: 50),
               ),
               RichText(
                 textAlign: TextAlign.center,
@@ -46,7 +159,8 @@ class ProfileSection extends StatelessWidget {
                     TextSpan(text: 'Estás a punto de eliminar tu cuenta.\n'),
                     TextSpan(
                       text: 'Esta acción es irreversible.\n',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
                       text: '¿Estás seguro de que deseas continuar?',
@@ -61,7 +175,8 @@ class ProfileSection extends StatelessWidget {
           actions: [
             TextButton(
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 backgroundColor: const Color.fromARGB(255, 123, 123, 123),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -77,21 +192,19 @@ class ProfileSection extends StatelessWidget {
             ),
             TextButton(
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                backgroundColor: const Color(0xFF0a4c86),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
+                _deleteAccount();
               },
               child: const Text(
-                'Continuar',
+                'Eliminar',
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
@@ -103,7 +216,7 @@ class ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the theme provider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
@@ -114,10 +227,13 @@ class ProfileSection extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color.fromARGB(255, 0, 0, 0), // Blue border
+          color: themeProvider.isDarkMode
+              ? const Color(0xFF9de9ff)
+              : const Color.fromARGB(255, 0, 0, 0),
           width: 2,
         ),
-        color: themeProvider.isDarkMode ? Color(0xFF0a4c86) : Colors.white, // Background color in night mode
+        color:
+            themeProvider.isDarkMode ? const Color(0xFF0a4c86) : Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,27 +246,30 @@ class ProfileSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: screenHeight * 0.030,
                   fontWeight: FontWeight.bold,
-                  color: themeProvider.isDarkMode ? Colors.white : Color.fromARGB(255, 0, 0, 0), // Blue for normal mode and white for night mode
+                  color: themeProvider.isDarkMode
+                      ? Colors.white
+                      : const Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end, // Align icons to the right
                 children: [
                   GestureDetector(
-                    onTap: () {
-                      themeProvider.toggleTheme(); // Toggle the theme
-                    },
+                    onTap: () => themeProvider.toggleTheme(),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: themeProvider.isDarkMode ? Colors.white : Colors.black, // White background for dark mode, black for light mode
+                        color: themeProvider.isDarkMode
+                            ? Colors.white
+                            : Colors.black,
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(8),
                       child: Icon(
                         themeProvider.isDarkMode
-                            ? Icons.wb_sunny // Sun icon for light mode
-                            : Icons.nightlight_round, // Moon icon for dark mode
-                        color: themeProvider.isDarkMode ? Colors.black : Colors.white, // Black icon for dark mode, white for light mode
+                            ? Icons.wb_sunny
+                            : Icons.nightlight_round,
+                        color: themeProvider.isDarkMode
+                            ? Colors.black
+                            : Colors.white,
                       ),
                     ),
                   ),
@@ -180,18 +299,22 @@ class ProfileSection extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   GestureDetector(
-                  onTap: () => _logout(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color(0xFF0a4c86),
-                      shape: BoxShape.circle,
+                    onTap: () => _logout(context),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: themeProvider.isDarkMode
+                            ? const Color(0xFF9de9ff)
+                            : const Color(0xFF0a4c86),
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.power_settings_new,
+                        color: themeProvider.isDarkMode
+                            ? Colors.black
+                            : Colors.white,
+                      ),
                     ),
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.power_settings_new,
-                      color: themeProvider.isDarkMode ? Colors.black : Colors.white, // Black icon for night mode
-                    ),
-                  ),
                   ),
                   const SizedBox(width: 5),
                 ],
@@ -205,8 +328,16 @@ class ProfileSection extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 child: CircleAvatar(
                   radius: 30,
-                  backgroundColor: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color.fromARGB(255, 0, 0, 0), // Background color for the icon in night mode
-                  child: Icon(Icons.person, color: themeProvider.isDarkMode ? Color(0xFF0a4c86) : Color.fromARGB(255, 255, 255, 255), size: 35), // Person icon color in night mode
+                  backgroundColor: themeProvider.isDarkMode
+                      ? const Color(0xFF9de9ff)
+                      : const Color.fromARGB(255, 0, 0, 0),
+                  child: Icon(
+                    Icons.person,
+                    color: themeProvider.isDarkMode
+                        ? const Color(0xFF0a4c86)
+                        : Colors.white,
+                    size: 35,
+                  ),
                 ),
               ),
               const SizedBox(width: 15),
@@ -214,18 +345,32 @@ class ProfileSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Nombre Apellido',
+                    'Nombre: ${firstName ?? 'Cargando...'}',
                     style: TextStyle(
                       fontSize: screenHeight * 0.018,
-                      color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color.fromARGB(255, 0, 0, 0), // Blue for normal mode and white for night mode
+                      color: themeProvider.isDarkMode
+                          ? const Color(0xFF9de9ff)
+                          : const Color.fromARGB(255, 0, 0, 0),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   Text(
-                    'Cédula',
+                    'Apellido: ${lastName ?? 'Cargando...'}',
                     style: TextStyle(
                       fontSize: screenHeight * 0.018,
-                      color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color.fromARGB(255, 0, 0, 0), // Blue for normal mode and white for night mode
+                      color: themeProvider.isDarkMode
+                          ? const Color(0xFF9de9ff)
+                          : const Color.fromARGB(255, 0, 0, 0),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    'Cédula: ${globals.currentUserCedula ?? 'No disponible'}',
+                    style: TextStyle(
+                      fontSize: screenHeight * 0.018,
+                      color: themeProvider.isDarkMode
+                          ? const Color(0xFF9de9ff)
+                          : const Color.fromARGB(255, 0, 0, 0),
                       fontWeight: FontWeight.w500,
                     ),
                   ),

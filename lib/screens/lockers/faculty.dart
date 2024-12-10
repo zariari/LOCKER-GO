@@ -32,12 +32,21 @@ class _FacultyScreenState extends State<FacultyScreen> {
 
   Future<void> fetchFaculties() async {
     try {
-      final response = await http.get(Uri.parse('http://pagueya-001-site3.mtempurl.com/api/Facultades'));
+      // Llamada a la nueva URI
+      final response = await http.get(Uri.parse(
+          'http://pagueya-001-site3.mtempurl.com/api/facultades/detail'));
       if (response.statusCode == 200) {
+        // Parsear los datos directamente desde la nueva URI
         final data = json.decode(response.body);
         setState(() {
-          faculties = data;
-          filteredFaculties = data;
+          faculties = data.map((faculty) {
+            return {
+              'id': faculty['FacultyId'],
+              'name': faculty['FacultyName'],
+              'available': faculty['AvailableLockers'],
+            };
+          }).toList();
+          filteredFaculties = faculties;
           isLoading = false;
         });
       } else {
@@ -91,7 +100,8 @@ class _FacultyScreenState extends State<FacultyScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the theme provider
+    final themeProvider =
+        Provider.of<ThemeProvider>(context); // Access the theme provider
 
     return Scaffold(
       appBar: AppBar(
@@ -113,7 +123,8 @@ class _FacultyScreenState extends State<FacultyScreen> {
         ),
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: 10), // Dynamic padding
+        padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.05, vertical: 10), // Dynamic padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -123,7 +134,9 @@ class _FacultyScreenState extends State<FacultyScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Night mode color
+                  color: themeProvider.isDarkMode
+                      ? Colors.white
+                      : Colors.black, // Night mode color
                 ),
               ),
             ),
@@ -140,11 +153,15 @@ class _FacultyScreenState extends State<FacultyScreen> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                            color: themeProvider.isDarkMode ? Colors.white : Colors.black, // White for night mode
+                            color: themeProvider.isDarkMode
+                                ? Colors.white
+                                : Colors.black, // White for night mode
                           ),
                         ),
                         hintStyle: TextStyle(
-                          color: themeProvider.isDarkMode ? Colors.white : Colors.black, // White for night mode
+                          color: themeProvider.isDarkMode
+                              ? Colors.white
+                              : Colors.black, // White for night mode
                         ),
                       ),
                     )
@@ -189,17 +206,22 @@ class FacultyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the theme provider
+    final themeProvider =
+        Provider.of<ThemeProvider>(context); // Access the theme provider
 
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color(0xFF0a4c86), // Blue for night mode
+          color: themeProvider.isDarkMode
+              ? Color(0xFF9de9ff)
+              : Color(0xFF0a4c86), // Blue for night mode
           width: 2.0,
         ),
       ),
-      color: themeProvider.isDarkMode ? Color(0xFF0a4c86) : Colors.white, // Box background color
+      color: themeProvider.isDarkMode
+          ? Color(0xFF0a4c86)
+          : Colors.white, // Box background color
       child: ListTile(
         onTap: () {
           Navigator.push(
@@ -220,7 +242,9 @@ class FacultyTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color(0xFF0a4c86), // Blue for night mode
+                color: themeProvider.isDarkMode
+                    ? Color(0xFF9de9ff)
+                    : Color(0xFF0a4c86), // Blue for night mode
               ),
               softWrap: true,
             ),
@@ -237,7 +261,9 @@ class FacultyTile extends StatelessWidget {
         ),
         trailing: Icon(
           Icons.arrow_forward,
-          color: themeProvider.isDarkMode ? Color(0xFF9de9ff) : Color(0xFF0a4c86), // Blue for night mode
+          color: themeProvider.isDarkMode
+              ? Color(0xFF9de9ff)
+              : Color(0xFF0a4c86), // Blue for night mode
         ),
       ),
     );
